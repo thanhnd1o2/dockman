@@ -1,12 +1,24 @@
 #!/usr/bin/env bash
-# uninstall.sh — Remove the Dockman symlink from /usr/local/bin.
+# uninstall.sh — Remove Dockman from the system.
 set -e
 
-BIN_LINK="/usr/local/bin/dockman"
+INSTALL_BIN="/usr/local/bin/dockman"
+INSTALL_LIB="/usr/local/lib/dockman"
 
-if [[ -L "$BIN_LINK" ]]; then
-  rm -f "$BIN_LINK"
-  echo "Removed: $BIN_LINK"
-else
-  echo "dockman is not installed at $BIN_LINK"
+removed=0
+
+if [[ -f "$INSTALL_BIN" || -L "$INSTALL_BIN" ]]; then
+  rm -f "$INSTALL_BIN"
+  echo "Removed: $INSTALL_BIN"
+  removed=1
+fi
+
+if [[ -d "$INSTALL_LIB" ]]; then
+  rm -rf "$INSTALL_LIB"
+  echo "Removed: $INSTALL_LIB"
+  removed=1
+fi
+
+if [[ "$removed" -eq 0 ]]; then
+  echo "Dockman is not installed."
 fi

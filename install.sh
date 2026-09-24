@@ -1,22 +1,30 @@
 #!/usr/bin/env bash
-# install.sh — Install Dockman by creating a symlink in /usr/local/bin.
-# The project directory is used in-place; editing the source takes effect immediately.
+# install.sh — Install Dockman by copying files to the system.
+# Source directory is copied to INSTALL_LIB; a launcher is placed in INSTALL_BIN.
 set -e
 
-INSTALL_DIR="/usr/local/bin"
+INSTALL_BIN="/usr/local/bin"
+INSTALL_LIB="/usr/local/lib/dockman"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BIN_SRC="$SCRIPT_DIR/bin/dockman"
-BIN_LINK="$INSTALL_DIR/dockman"
 
-if [[ ! -x "$BIN_SRC" ]]; then
-  chmod +x "$BIN_SRC"
-fi
+echo "Installing Dockman..."
 
-if [[ -e "$BIN_LINK" || -L "$BIN_LINK" ]]; then
-  echo "Removing existing $BIN_LINK"
-  rm -f "$BIN_LINK"
-fi
+# Copy project files to install lib directory.
+rm -rf "$INSTALL_LIB"
+mkdir -p "$INSTALL_LIB"
+cp -r "$SCRIPT_DIR/lib"         "$INSTALL_LIB/lib"
+cp    "$SCRIPT_DIR/VERSION"     "$INSTALL_LIB/VERSION"
 
-ln -s "$BIN_SRC" "$BIN_LINK"
-echo "Installed: $BIN_LINK -> $BIN_SRC"
+# Create a launcher script with the hardcoded install path.
+cat > "$INSTALL_BIN/dockman" << EOF
+#!/usr/bin/env bash
+DOCKMAN_ROOT="$INSTALL_LIB"
+export DOCKMAN_ROOT
+source "\$DOCKMAN_ROOT/lib/app.sh"
+main "\$@"
+EOF
+chmod +x "$INSTALL_BIN/dockman"
+
+echo "Installed to: $INSTALL_LIB"
+echo "Launcher:     $INSTALL_BIN/dockman"
 echo "Run 'dockman' to start."

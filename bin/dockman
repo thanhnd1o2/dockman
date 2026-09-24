@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# bin/dockman — Dockman entry point.
+# Resolves the install root (following symlinks), loads all modules, then calls main.
+set -u
+
+# Resolve the real script location, following symlink chains.
+# readlink without -f is Bash 3.2 / macOS compatible.
+_self="$0"
+while [[ -L "$_self" ]]; do
+  _link="$(readlink "$_self")"
+  case "$_link" in
+    /*) _self="$_link" ;;
+    *)  _self="$(dirname "$_self")/$_link" ;;
+  esac
+done
+DOCKMAN_ROOT="$(cd "$(dirname "$_self")/.." && pwd)"
+unset _self _link
+export DOCKMAN_ROOT
+
+# shellcheck source=../lib/app.sh
+source "$DOCKMAN_ROOT/lib/app.sh"
+
+main "$@"

@@ -34,6 +34,7 @@ start_lima_engine() {
 # main — top-level entry point.
 main() {
   local rc action
+  terminal_init
   check_docker_cli
 
   # Engine-not-running loop: offer Lima/Colima start or quit.

@@ -11,8 +11,16 @@ else
 fi
 
 # ---------- terminal lifecycle ----------
+
+# terminal_init — enter the alternate screen buffer.
+# Call once at app startup to keep TUI output out of the scroll-back history.
+terminal_init() {
+  printf '\033[?1049h'
+}
+
+# cleanup_terminal — exit alternate screen, restore cursor and colors.
 cleanup_terminal() {
-  printf '\033[?25h%b' "$RESET"
+  printf '\033[?25h\033[?1049l%b' "$RESET"
 }
 trap cleanup_terminal EXIT
 trap 'cleanup_terminal; exit 130' INT TERM

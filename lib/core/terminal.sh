@@ -12,10 +12,13 @@ fi
 
 # ---------- terminal lifecycle ----------
 
-# terminal_init — enter the alternate screen buffer.
-# Call once at app startup to keep TUI output out of the scroll-back history.
+# terminal_init — enter the alternate screen buffer and clear scroll-back history.
+# Call once at app startup so the TUI opens on a completely blank slate.
 terminal_init() {
-  printf '\033[?1049h'
+  printf '\033[?1049h'  # Enter alternate screen buffer
+  printf '\033[2J'      # Clear visible screen
+  printf '\033[3J'      # Clear scroll-back buffer
+  printf '\033[H'       # Move cursor to top-left
 }
 
 # cleanup_terminal — exit alternate screen, restore cursor and colors.

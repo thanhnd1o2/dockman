@@ -12,13 +12,17 @@ fi
 
 # ---------- terminal lifecycle ----------
 
-# terminal_init — enter the alternate screen buffer and clear scroll-back history.
+# terminal_init — clear scroll-back history and enter the alternate screen buffer.
 # Call once at app startup so the TUI opens on a completely blank slate.
 terminal_init() {
-  printf '\033[?1049h'  # Enter alternate screen buffer
-  printf '\033[2J'      # Clear visible screen
-  printf '\033[3J'      # Clear scroll-back buffer
-  printf '\033[H'       # Move cursor to top-left
+  if [ "${TERM_PROGRAM:-}" = "iTerm.app" ]; then
+    # iTerm2 explicitly supports this scroll-back clearing command.
+    printf '\033]1337;ClearScrollback\007'
+  fi
+  # Clear the visible screen and saved lines in the main terminal buffer.
+  printf '\033[2J\033[3J\033[H'
+  # Enter the alternate screen buffer so TUI output stays isolated.
+  printf '\033[?1049h'
 }
 
 # cleanup_terminal — exit alternate screen, restore cursor and colors.
@@ -30,7 +34,7 @@ trap 'cleanup_terminal; exit 130' INT TERM
 
 # ---------- screen ----------
 screen_clear() {
-  printf '\033[2J\033[H'
+  printf '\033[2J\033[3J\033[H'
 }
 
 cursor_home() {

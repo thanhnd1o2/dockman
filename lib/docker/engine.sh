@@ -75,6 +75,23 @@ preferred_lima_instance() {
   return 1
 }
 
+# detect_colima_profile — profile backing the active Docker context, if any.
+detect_colima_profile() {
+  local context endpoint profile
+  command -v colima >/dev/null 2>&1 || return 1
+  context="$(docker context show 2>/dev/null || true)"
+  endpoint="$(docker context inspect "$context" --format '{{.Endpoints.docker.Host}}' 2>/dev/null || true)"
+  case "$endpoint" in
+    unix:*"/.colima/"*"/docker.sock")
+      profile="${endpoint#*/.colima/}"
+      profile="${profile%%/*}"
+      [[ -n "$profile" ]] || return 1
+      printf '%s' "$profile"
+      ;;
+    *) return 1 ;;
+  esac
+}
+
 # ---------- disk / resource summary ----------
 
 docker_disk_summary() {

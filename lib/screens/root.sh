@@ -31,9 +31,28 @@ start_lima_engine() {
   wait_for_docker
 }
 
+# stop_docker_engine RUNTIME — confirm and stop the active Lima/Colima runtime.
+stop_docker_engine() {
+  local kind="${1%%:*}" instance="${1#*:}" rc
+  screen_clear
+  header "Docker Engine" "Stop $kind ($instance)"
+  confirm "Stop Docker and its running containers?" || return 1
+  echo
+  case "$kind" in
+    lima)   limactl stop "$instance"; rc=$? ;;
+    colima) colima stop --profile "$instance"; rc=$? ;;
+  esac
+  if [[ "$rc" -ne 0 ]]; then
+    printf '%b✗ Failed to stop Docker (%s).%b\n' "$RED" "$kind" "$RESET"
+    pause_screen
+    return 1
+  fi
+  printf '%b✓ Docker Engine stopped.%b\n' "$GREEN" "$RESET"
+}
+
 # main — top-level entry point.
 main() {
-  local rc action
+  local rc action stop_target instance endpoint
   terminal_init
   check_docker_cli
 
@@ -74,9 +93,24 @@ main() {
 
   # Main navigation loop.
   while true; do
+    stop_target=""
+    if instance="$(detect_lima_instance 2>/dev/null)"; then
+      endpoint="$(docker context inspect "$(docker context show 2>/dev/null)" --format '{{.Endpoints.docker.Host}}' 2>/dev/null || true)"
+      case "$endpoint" in
+        *"/.lima/$instance/"*) stop_target="lima:$instance" ;;
+      esac
+    fi
+    if [[ -z "$stop_target" ]] && instance="$(detect_colima_profile 2>/dev/null)"; then
+      stop_target="colima:$instance"
+    fi
     MENU_LABELS=("Containers" "Images"           "Volumes"            "Networks"            "Ports"                "System"                    "Cleanup")
     MENU_DESCS=("Manage Docker containers" "Manage Docker images" "Manage Docker volumes" "Manage Docker networks" "Exposed port bindings" "Docker system information" "Clean unused Docker resources")
     MENU_ACTIONS=("containers" "images" "volumes" "networks" "ports" "system" "cleanup")
+    if [[ -n "$stop_target" ]]; then
+      MENU_LABELS+=("Stop Docker")
+      MENU_DESCS+=("Stop the active ${stop_target%%:*} engine")
+      MENU_ACTIONS+=("stop")
+    fi
     MENU_SELECTED=0
     menu_select "Docker Manager" "$(docker context show 2>/dev/null || true)" 0; rc=$?
     if [[ "$rc" -eq 3 ]]; then
@@ -94,6 +128,7 @@ main() {
       ports)      ports_screen;      rc=$? ;;
       system)     system_screen;     rc=0  ;;
       cleanup)    cleanup_screen;    rc=$? ;;
+      stop)       stop_docker_engine "$stop_target" && return; rc=0 ;;
     esac
     [[ "${rc:-0}" -eq 3 ]] && { screen_clear; return; }
   done

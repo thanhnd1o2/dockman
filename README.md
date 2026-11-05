@@ -21,7 +21,7 @@ Docker Desktop is powerful but heavy. Dockman gives you the same core visibility
 - **Ports** — overview of all exposed port bindings across running containers
 - **System** — Docker version, disk usage, container/image counts
 - **Cleanup** — prune stopped containers, dangling images, unused volumes/networks, system prune
-- **Engine startup** — detects stopped Docker Engine; offers to start via Colima or Lima
+- **Engine control** — start a stopped Docker Engine via Colima or Lima, or stop the active Colima/Lima engine from the main menu
 
 ## Requirements
 
